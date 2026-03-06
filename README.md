@@ -59,7 +59,7 @@ All settings are in `src/config.ps1`:
 
 ```powershell
 # Different endpoint
-$CONFIG_HEALTH_PATH = ':8080/api/v1/status'
+$CONFIG_HEALTH_PATH = ':8080/status'
 
 # IPs instead of hostnames
 $CONFIG_HOSTS = @(

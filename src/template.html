@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>{{TITLE}}</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #f0efe9;
+      --surface:   #faf9f7;
+      --border:    #e2e0d8;
+      --text:      #18170f;
+      --faint:     #b8b5ac;
+      --ok:        #15622e;
+      --ok-bg:     #d9f5e5;
+      --ok-glow:   #a7e8c4;
+      --warn:      #7a4a00;
+      --warn-bg:   #fdf0cc;
+      --warn-glow: #f5d97a;
+      --fail:      #8f1a1a;
+      --fail-bg:   #fde8e8;
+      --fail-glow: #f5b4b4;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+      --cols: {{GRID_COLS}};
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); font-family: var(--sans); color: var(--text); padding: 60px 68px; min-height: 100vh; }
+
+    .header { max-width: 900px; margin-bottom: 44px; display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 20px; border-bottom: 1.5px solid var(--border); }
+    .title   { font-size: 36px; font-weight: 600; letter-spacing: -.03em; }
+    .subtitle { font-family: var(--mono); font-size: 12px; color: var(--faint); letter-spacing: .08em; margin-top: 10px; text-transform: uppercase; }
+    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .timestamp { font-family: var(--mono); font-size: 13px; color: var(--faint); }
+    .hint      { font-family: var(--mono); font-size: 11px; color: var(--faint); opacity: .5; }
+
+    .grid { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 12px; max-width: 900px; }
+
+    .host-card { position: relative; background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 22px 20px 18px; cursor: default; transition: all .15s ease; overflow: hidden; }
+    .host-card::after { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity .15s; pointer-events: none; }
+    .host-card.ok::after   { background: var(--ok-bg); }
+    .host-card.warn::after { background: var(--warn-bg); }
+    .host-card.fail::after { background: var(--fail-bg); }
+    .host-card:hover { transform: translateY(-2px); }
+    .host-card:hover::after { opacity: 1; }
+    .host-card.ok:hover   { border-color: var(--ok-glow);   box-shadow: 0 8px 28px rgba(21,98,46,.1); }
+    .host-card.warn:hover { border-color: var(--warn-glow); box-shadow: 0 8px 28px rgba(122,74,0,.1); }
+    .host-card.fail:hover { border-color: var(--fail-glow); box-shadow: 0 8px 28px rgba(143,26,26,.1); }
+
+    .bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 14px 14px 0 0; }
+    .ok   .bar { background: #2dcc6e; }
+    .warn .bar { background: #f5a800; }
+    .fail .bar { background: #e84040; }
+
+    .dot { position: absolute; top: 18px; right: 18px; width: 9px; height: 9px; border-radius: 50%; z-index: 2; }
+    .ok   .dot { background: #2dcc6e; box-shadow: 0 0 0 3px rgba(45,204,110,.18); }
+    .warn .dot { background: #f5a800; box-shadow: 0 0 0 3px rgba(245,168,0,.18); }
+    .fail .dot { background: #e84040; box-shadow: 0 0 0 3px rgba(232,64,64,.18); }
+
+    .host-name   { display: block; font-family: var(--mono); font-size: 19px; font-weight: 500; color: var(--text); position: relative; z-index: 2; transition: color .15s; }
+    .host-detail { display: block; font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 10px; position: relative; z-index: 2; opacity: 0; transform: translateY(5px); transition: opacity .15s, transform .15s; }
+    .host-card:hover .host-name   { }
+    .host-card.ok:hover   .host-name { color: var(--ok); }
+    .host-card.warn:hover .host-name { color: var(--warn); }
+    .host-card.fail:hover .host-name { color: var(--fail); }
+    .host-card:hover .host-detail { opacity: 1; transform: translateY(0); }
+
+    .footer  { max-width: 900px; margin-top: 28px; display: flex; align-items: center; justify-content: space-between; }
+    .summary { display: flex; gap: 8px; }
+    .chip    { display: inline-flex; align-items: center; gap: 9px; padding: 8px 18px; border-radius: 28px; font-size: 15px; font-weight: 500; border: 1.5px solid transparent; }
+    .chip.ok   { color: var(--ok);   background: var(--ok-bg);   border-color: var(--ok-glow); }
+    .chip.warn { color: var(--warn); background: var(--warn-bg); border-color: var(--warn-glow); }
+    .chip.fail { color: var(--fail); background: var(--fail-bg); border-color: var(--fail-glow); }
+    .chip-val { font-size: 20px; font-weight: 600; line-height: 1; font-family: var(--mono); }
+    .elapsed  { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="title">{{TITLE}}</div>
+    <div class="subtitle">{{SUBTITLE}}</div>
+  </div>
+  <div class="header-right">
+    <span class="timestamp">{{TIMESTAMP}}</span>
+    <span class="hint">R — refresh &nbsp;&nbsp; Q — quit</span>
+  </div>
+</div>
+
+<div class="grid">{{CARDS}}</div>
+
+<div class="footer">
+  <div class="summary">
+    <div class="chip ok">  <span class="chip-val">{{OK_COUNT}}</span>OK</div>
+    <div class="chip warn"><span class="chip-val">{{WARN_COUNT}}</span>Warn</div>
+    <div class="chip fail"><span class="chip-val">{{FAIL_COUNT}}</span>Fail</div>
+  </div>
+  <span class="elapsed">{{ELAPSED}}s</span>
+</div>
+
+<script>
+var token = {{TOKEN}};
+function poll() {
+  fetch('/token')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.token !== token) { location.reload(); }
+      else { setTimeout(poll, 2000); }
+    })
+    .catch(function() { setTimeout(poll, 3000); });
+}
+setTimeout(poll, 2000);
+
+window.addEventListener('beforeunload', function() {
+  navigator.sendBeacon('/shutdown');
+});
+</script>
+
+</body>
+</html>
